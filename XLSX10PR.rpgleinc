@@ -1,0 +1,43 @@
+**free
+// =====================================================================================
+// XLSX10PR - prototype of program XLSX10R (Excel .xlsx worksheet -> Db2 table)
+// Version 1.4.1 (2026-11-17) = XLSX_VERSION of the XLSX tools.
+//
+//   /copy '<dir>/XLSX10PR.rpgleinc'
+//   XLSX10R('/home/me/orders.xlsx' : 'ORDERS    MYLIB     ');       // all defaults
+//   XLSX10R('/home/me/orders.xlsx' : 'ORDERS    MYLIB     ' : rows : msg
+//          : 'Sheet1' : *omit : '*YES' : *omit : '*VISIBLE');
+//
+// Parameters 3 and 4 are outputs. msg passed: errors come back in it (blank = ok) and
+// no escape message is sent; not passed or '*ESCAPE' on entry: escape CPF9898.
+// Every parameter after the second is optional (*omit or not passed = default).
+// =====================================================================================
+/if defined(XLSX10PR_H)
+/eof
+/endif
+/define XLSX10PR_H
+
+dcl-pr XLSX10R extpgm('XLSX10R');
+  pStmf    char(1024) const;                     // .xlsx stream file
+  pToFile  char(20) const;                       // table + library (*LIBL *CURLIB);
+                                                 //   table *NONE = analyse only
+  pRows    packed(15 : 0) options(*nopass : *omit);   // out: rows inserted
+  pMsg     char(256) options(*nopass : *omit);        // out: error text, blank = ok
+  pSheet   char(64) const options(*nopass : *omit);   // *FIRST | name | number
+  pRange   char(256) const options(*nopass : *omit);  // *AUTO | A1:F20 | table | name
+  pHeader  char(10) const options(*nopass : *omit);   // *AUTO *YES *NO *SKIP
+  pStart   packed(7 : 0) const options(*nopass : *omit);  // first row, 0 = *AUTO
+  pRowSel  char(10) const options(*nopass : *omit);   // *ALL *VISIBLE
+  pMaxRows packed(9 : 0) const options(*nopass : *omit);  // 0 = all
+  pMbrOpt  char(10) const options(*nopass : *omit);   // *ADD *REPLACE
+  pCrtFile char(10) const options(*nopass : *omit);   // *YES *NO *REPLACE
+  pMap     char(10) const options(*nopass : *omit);   // *AUTO *NAME *POS
+  pColMap  char(2000) const options(*nopass : *omit); // 'Heading=COLUMN;C=COL2;D=*SKIP'
+  pTypes   char(2000) const options(*nopass : *omit); // 'AMOUNT=DECIMAL(11,2);...'
+  pNulls   char(4) const options(*nopass : *omit);    // *NO *YES (new columns)
+  pErrors  char(10) const options(*nopass : *omit);   // *STOP *SKIP *NULL
+  pStrCcs  char(10) const options(*nopass : *omit);   // *AUTO *JOB *UTF8 *UTF16 n
+  pTrim    char(4) const options(*nopass : *omit);    // *YES *NO
+  pDatFmt  char(10) const options(*nopass : *omit);   // *DMY *MDY *YMD
+  pReport  char(1024) const options(*nopass : *omit); // *NONE | report stream file
+end-pr;

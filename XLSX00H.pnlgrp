@@ -1,0 +1,357 @@
+.* XLSX00H - help panel group of command XLSX00 (Export to Excel XLSX)
+.* Build: CPYFRMSTMF to QTEMP/QPNLSRC(XLSX00H), CRTPNLGRP, CRTCMD HLPPNLGRP
+.* (see XLSXDIST.clle).  Lines max 80 columns.  Version 1.4.1 (2026-11-17)
+:PNLGRP.
+:HELP NAME='XLSX00'.Export to Excel XLSX - Help
+:P.The Export to Excel XLSX (XLSX00) command writes the result of an SQL
+SELECT statement, or the records of a database file or member, to a
+Microsoft Excel workbook (.xlsx, Office Open XML) in a stream file of the
+integrated file system.
+:P.The workbook is created by an ILE RPG program (XLSX00R) without Java,
+PASE or other products. Numbers stay numeric, dates, times and timestamps
+become real Excel dates, text is written as Unicode (UTF-8) converted from
+the CCSID of each column, and NULL values become empty cells.
+:P.A new workbook can be created, a sheet can be added to an existing
+workbook, the content of a sheet can be replaced, or rows can be appended
+at the bottom of an existing sheet, also in workbooks created by Excel or
+other programs.
+:P.The written cells can get a workbook name or become an Excel table, and
+the sheet can be hidden, so that report sheets, charts and pivot tables of
+a template can use the data.
+:P.The header row can show the column names, the column headings or the
+column text, and the column text can also be added as a second header row
+or as Excel notes on the headings.
+:P.Version 1.4.1.
+:P.:HP2.Restrictions&colon.:EHP2.
+:UL.
+:LI.
+:P.A worksheet holds at most 1,048,576 rows (header included) and 16,384
+columns. Rows beyond the limit are not written and the completion message
+says that the sheet was truncated. The command handles at most 1000
+columns.
+:LI.
+:P.Text longer than 32,767 bytes is cut. BLOB, ROWID and DATALINK columns
+are left empty. CLOB, DBCLOB and XML columns are read up to 32,740 bytes.
+:LI.
+:P.The workbook must be smaller than 4 GB (no ZIP64). When an existing
+workbook is updated, its parts styles.xml, workbook.xml and
+[Content_Types].xml must each be smaller than 1 MB.
+:LI.
+:P.The file is written as a temporary file with the suffix .tmp and renamed
+at the end, so an existing workbook is not damaged by a failing run. You
+need *RWX authority to the directory of the stream file.
+:LI.
+:P.The program XLSX00R is called with the library list of the job.
+:EUL.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/SRC'.SQL or file (SRC) - Help
+:XH3.SQL statement or file (SRC)
+:P.Specifies what is exported. This is a required parameter.
+:PARML.
+:PT.:PV.select-statement:EPV.
+:PD.An SQL statement that starts with SELECT, WITH or VALUES. System naming
+is used: unqualified tables are found through the library list, and both
+LIB/TABLE and LIB.TABLE are accepted. Numeric literals use the period as
+decimal separator. Column names or AS clauses become the default headings.
+:PT.:PV.library-name/file-name:EPV.
+:PD.A database file, table or view, as library/file, library.file or
+file alone (the file is then found through the library list). A member is
+given in parentheses, for example MYLIB/MYFILE(MBR2); the member is read
+through the alias QTEMP/XLSX00A.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/TOSTMF'.To stream file (TOSTMF) - Help
+:XH3.To stream file (TOSTMF)
+:P.Specifies the path of the workbook, for example
+/home/user/orders.xlsx. This is a required parameter.
+:P.With MODE(*REPLACE) an existing file is replaced. With MODE(*ADDSHEET) or
+MODE(*APPEND) a file that does not exist is created as a new workbook.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/MODE'.Mode (MODE) - Help
+:XH3.Mode (MODE)
+:P.Specifies how the stream file is written.
+:PARML.
+:PT.:PK DEF.*REPLACE:EPK.
+:PD.A new workbook with one sheet is created. An existing file is replaced.
+:PT.*ADDSHEET
+:PD.A new sheet is added at the end of an existing workbook. When the sheet
+name is already used, a number is added, for example Data (2).
+:PT.*APPEND
+:PD.The rows are added after the last row of the sheet named in the SHEET
+parameter, or of the last sheet when SHEET(*DFT) is specified. No header
+is written unless the sheet is empty; an autofilter of the sheet is
+extended to the new rows. When the sheet does not exist, it is added as
+with *ADDSHEET.
+:PT.*REPLSHEET
+:PD.The content of the sheet named in the SHEET parameter is replaced; with
+SHEET(*DFT) the file or member name, or Sheet1, is used. The sheet keeps
+its name and position; the other sheets, with their formulas, charts and
+pivot tables, are kept unchanged and still refer to the sheet by name.
+Excel recalculates all formulas when the workbook is opened. Notes,
+drawings and tables that were on the replaced sheet itself are dropped.
+Pivot tables based on a fixed cell range do not grow with the new rows:
+base them on a whole-column range or a dynamic name, and set their option
+to refresh data when the file is opened. When the sheet does not exist,
+it is added as with *ADDSHEET.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/SHEET'.Sheet name (SHEET) - Help
+:XH3.Sheet name (SHEET)
+:P.Specifies the name of the worksheet (up to 31 characters). The
+characters [ ] &colon. * ? / \ are replaced by an underscore.
+:PARML.
+:PT.:PK DEF.*DFT:EPK.
+:PD.The file or member name is used when a file is exported, otherwise
+Sheet1. With MODE(*APPEND) the last sheet of the workbook is used.
+With MODE(*REPLSHEET) the sheet with this default name is replaced.
+:PT.:PV.sheet-name:EPV.
+:PD.Specify the name of the sheet.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/HEADER'.Header row (HEADER) - Help
+:XH3.Header row (HEADER)
+:P.Specifies the content of the header row. The header row is bold on a
+blue band; with FILTER(*YES) it has an autofilter and with FREEZE(*YES) it
+stays visible when scrolling.
+:PARML.
+:PT.:PK DEF.*LABELS:EPK.
+:PD.The column headings (LABEL ON COLUMN ... IS, the three lines of 20
+characters joined), or the column name when a column has no heading.
+:PT.*TEXT
+:PD.The column text (LABEL ON COLUMN ... TEXT IS, field text of DDS files),
+or the heading, or the name, in this order. The text is taken from the
+base column of each result column, also through joins, views and AS
+names; expressions use their name.
+:PT.*NAMES
+:PD.The column names (or AS names) of the result.
+:PT.*NONE
+:PD.No header row is written. The parameters HDRTEXT, FILTER, FREEZE and
+COLDESC are ignored.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/HDRTEXT'.Headings (HDRTEXT) - Help
+:XH3.Column headings (HDRTEXT)
+:P.Specifies your own headings, separated by semicolons, in the order of
+the columns. An empty item keeps the heading chosen with the HEADER
+parameter. Example&colon. 'Customer;Name;;Balance' changes the headings of
+columns 1, 2 and 4.
+:PARML.
+:PT.:PK DEF.*NONE:EPK.
+:PD.The headings are chosen with the HEADER parameter.
+:PT.:PV.heading-list:EPV.
+:PD.Specify up to 5000 characters.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/FILTER'.Autofilter (FILTER) - Help
+:XH3.Autofilter on header row (FILTER)
+:P.Specifies whether the header row gets the Excel autofilter buttons.
+:PARML.
+:PT.:PK DEF.*YES:EPK.
+:PD.An autofilter is set on the header row (on the second header row when
+COLDESC(*ROW) or COLDESC(*BOTH) is specified).
+:PT.*NO
+:PD.No autofilter.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/FREEZE'.Freeze header (FREEZE) - Help
+:XH3.Freeze header row (FREEZE)
+:P.Specifies whether the header rows stay visible when the sheet is
+scrolled.
+:PARML.
+:PT.:PK DEF.*YES:EPK.
+:PD.The header rows are frozen.
+:PT.*NO
+:PD.The header rows scroll with the data.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/LEVEL'.Compression level (LEVEL) - Help
+:XH3.Compression level (LEVEL)
+:P.Specifies how much effort is spent compressing the workbook. Higher
+levels give smaller files and take more time.
+:PARML.
+:PT.:PK DEF.2:EPK.
+:PD.Good balance of speed and size, recommended for most exports.
+:PT.0
+:PD.No compression. Fastest, but the file is 5 to 7 times larger.
+:PT.1-9
+:PD.Levels 1 to 4 compare each position once (fast). Levels 5 to 9 also
+try the next position for a longer match, as zlib does, and give smaller
+files. Measured on 200,000 rows by 10 columns (91 MB of sheet data)&colon.
+:UL COMPACT.
+:LI.
+:P.Level 2&colon. 15.1 MB in 6 seconds.
+:LI.
+:P.Level 4&colon. 12.3 MB in 11 seconds.
+:LI.
+:P.Level 6&colon. 11.3 MB in 15 seconds.
+:LI.
+:P.Level 7&colon. 10.8 MB in 19 seconds.
+:LI.
+:P.Level 9&colon. about as small as level 7, in 33 seconds.
+:EUL.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/COLDESC'.Column text (COLDESC) - Help
+:XH3.Column text&colon. row / notes (COLDESC)
+:P.Specifies whether the column text (LABEL ON COLUMN ... TEXT IS, field
+text of DDS files) is added to the header. The text is taken from the
+base column of each result column. This parameter is ignored with
+HEADER(*NONE).
+:PARML.
+:PT.:PK DEF.*NONE:EPK.
+:PD.No column text is added.
+:PT.*ROW
+:PD.A second header row shows the column text, in italics. When the
+heading already is the text (HEADER(*TEXT)), the second row shows the
+column name.
+:PT.*NOTE
+:PD.Each heading gets an Excel note, shown when the mouse is over the cell,
+with the base column (schema.table.column), the SQL data type, the column
+text and the column heading. Notes are added only to sheets created by
+the command, not when rows are appended to an existing sheet.
+:PT.*BOTH
+:PD.Both a second header row and notes.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/RANGENAME'.Defined name (RANGENAME) - Help
+:XH3.Defined name over the data (RANGENAME)
+:P.Specifies a workbook name (Formulas, Name Manager in Excel) for the
+cells written by the command&colon. the header row and the data rows, for
+example Sales = 'Data'!$A$1&colon.$K$13. Formulas, charts and pivot
+tables can use the name instead of a cell range. An existing workbook
+name with the same name is replaced; with MODE(*APPEND) only its last row
+is moved to the new last row.
+:PARML.
+:PT.:PK DEF.*NONE:EPK.
+:PD.No name is defined.
+:PT.:PV.name:EPV.
+:PD.Up to 255 characters&colon. letters A-Z, digits, _ . and \, starting
+with a letter, _ or \. A name that looks like a cell reference (for
+example AB12 or R1C1) is not allowed. Put the name between apostrophes
+to keep lower case letters.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/TABLE'.Excel table (TABLE) - Help
+:XH3.Excel table (TABLE)
+:P.Specifies whether the header row and the data rows of a sheet created
+by the command become an Excel table (Insert, Table in Excel). A table has
+its own filter buttons and banded rows, and formulas, charts and pivot
+tables that refer to the table name follow its size when rows are added.
+:P.With MODE(*APPEND), tables of the existing sheet that end at its last
+row are extended over the new rows; this parameter is then ignored. With
+MODE(*REPLSHEET) the tables of the replaced sheet are removed first, so a
+table with the same name can be created again&colon. pivot tables, charts
+and formulas of a report template that use the table name keep working
+with the new number of rows.
+:P.A table needs exactly one header row&colon. it cannot be used with
+HEADER(*NONE) or with COLDESC(*ROW) or COLDESC(*BOTH). Duplicate headings
+get a number (Name, Name2).
+:PARML.
+:PT.:PK DEF.*NONE:EPK.
+:PD.No table; the header row gets a normal autofilter (FILTER parameter).
+:PT.*YES
+:PD.A table named after the sheet, for example sheet Data gives table Data.
+Characters that are not allowed become underscores, and a number is
+added when the name is already used.
+:PT.:PV.table-name:EPV.
+:PD.The name of the table, with the same rules as for RANGENAME. It must
+not be used by another table or workbook name.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/HIDE'.Hide the sheet (HIDE) - Help
+:XH3.Hide the sheet (HIDE)
+:P.Specifies whether the sheet written by the command is hidden, for
+example a data sheet used by the report sheets of a template. A workbook
+must keep at least one visible sheet.
+:PARML.
+:PT.:PK DEF.*DFT:EPK.
+:PD.A new sheet is visible. An existing sheet (MODE(*APPEND) or
+MODE(*REPLSHEET)) keeps its state, so a hidden data sheet stays hidden.
+:PT.*NO
+:PD.The sheet is visible.
+:PT.*YES
+:PD.The sheet is hidden. It can be shown again with Unhide in Excel.
+:PT.*VERY
+:PD.The sheet is very hidden&colon. it is not listed by Unhide in Excel and
+can only be shown again with VBA or by a program.
+:EPARML.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/COMMAND/EXAMPLES'.Examples - Help
+:XH3.Examples for XLSX00
+:P.:HP2.Example 1&colon. Export a query:EHP2.
+:XMP.
+XLSX00 SRC('select * from mylib/orders where year = 2026')
+       TOSTMF('/home/user/orders.xlsx')
+:EXMP.
+:P.Creates orders.xlsx with one sheet, column headings in the header row,
+autofilter and frozen header.
+:P.:HP2.Example 2&colon. Add a file as a new sheet, with column text:EHP2.
+:XMP.
+XLSX00 SRC('MYLIB/CUSTOMERS') TOSTMF('/home/user/orders.xlsx')
+       MODE(*ADDSHEET) SHEET(Customers) HEADER(*TEXT) COLDESC(*NOTE)
+:EXMP.
+:P.Adds the sheet Customers to orders.xlsx. The headings are the field
+texts; each heading has a note with the field name, type and text.
+:P.:HP2.Example 3&colon. Append the rows of a member to a sheet:EHP2.
+:XMP.
+XLSX00 SRC('MYLIB/DAILY(D20261028)') TOSTMF('/home/user/log.xlsx')
+       MODE(*APPEND) SHEET(Daily)
+:EXMP.
+:P.Adds the records of member D20261028 after the last row of sheet Daily.
+:P.:HP2.Example 4&colon. Refresh the data sheet of a report template:EHP2.
+:XMP.
+XLSX00 SRC('select * from mylib/sales where year = 2026')
+       TOSTMF('/reports/sales.xlsx') MODE(*REPLSHEET) SHEET(Data)
+:EXMP.
+:P.Rewrites sheet Data of sales.xlsx. The summary sheets, charts and pivot
+tables that use Data are kept and show the new figures when the workbook
+is opened.
+:P.:HP2.Example 5&colon. Hidden data table for a report template:EHP2.
+:XMP.
+XLSX00 SRC('select * from mylib/sales') TOSTMF('/reports/sales.xlsx')
+       MODE(*REPLSHEET) SHEET(Data) TABLE(Sales) HIDE(*YES)
+:EXMP.
+:P.Rewrites the hidden sheet Data as table Sales. Pivot tables and charts
+of the template based on Sales show all the new rows.
+:P.:HP2.Example 6&colon. Call from RPG:EHP2.
+:XMP.
+/copy '/home/user/xlsx/XLSX00PR.rpgleinc'
+XLSX00R(sql : '/home/user/x.xlsx' : '*REPLACE' : 'Data' : '*TEXT'
+        : *omit : '*YES' : '*YES' : 2 : '*NOTE' : rows : msg
+        : 'SalesRange' : '*YES' : '*DFT');
+:EXMP.
+:P.With the optional parameter msg, errors are returned in msg (blank when
+the export succeeded) instead of an escape message; rows receives the
+number of rows written.
+:EHELP.
+.* ---------------------------------------------------------------------------
+:HELP NAME='XLSX00/ERROR/MESSAGES'.Error messages - Help
+:XH3.Error messages for XLSX00
+:P.:HP3.*ESCAPE messages:EHP3.
+:DL COMPACT.
+:DT.CPF9898
+:DD.The export failed. The text starts with XLSX00R and tells the
+reason, for example an SQL error with its SQLSTATE, a stream file that
+cannot be written, or a workbook that cannot be updated.
+:EDL.
+:P.:HP3.*COMP messages:EHP3.
+:DL COMPACT.
+:DT.CPF9897
+:DD.Number of rows written, sheet, stream file and elapsed seconds.
+:EDL.
+:EHELP.
+:EPNLGRP.

@@ -1,0 +1,56 @@
+**free
+// =====================================================================================
+// XLSX00PR - prototype of program XLSX00R (SQL statement or file -> Excel .xlsx)
+//
+//   /copy '<dir>/XLSX00PR.rpgleinc'
+//   XLSX00R('select * from mylib/orders where year = 2026'
+//          : '/home/me/orders.xlsx');                          // all defaults
+//   XLSX00R('MYLIB/CUSTOMERS' : '/home/me/book.xlsx' : '*ADDSHEET' : 'Customers'
+//          : '*TEXT' : *omit : '*YES' : '*YES' : 6 : '*BOTH' : rows : msg);
+//
+// Version 1.4.1 (2026-11-17) = XLSX_VERSION of XLSX00R.
+// Every parameter after the second is optional (*omit or not passed = default).
+// pMsg passed: errors come back in it (blank = ok) and no escape message is sent.
+// pMsg not passed (or '*ESCAPE' on entry): errors are signalled with escape CPF9898.
+// pRName: workbook defined name over header + data rows (blank / *NONE = none).
+// pTable: *YES or a name = Excel table over header + data (new sheets; *APPEND extends
+//         the sheet's tables, *REPLSHEET recreates a table with the same name).
+// pHide:  *DFT (new sheets visible, existing unchanged), *NO, *YES, *VERY (very hidden).
+// =====================================================================================
+/if defined(XLSX00PR_H)
+/eof
+/endif
+/define XLSX00PR_H
+
+dcl-pr XLSX00R extpgm('XLSX00R');
+  pSrc     char(5000) const;                    // SQL (SELECT/WITH/VALUES) or LIB/FILE(MBR)
+  pStmf    char(1024) const;                    // target .xlsx stream file
+  pMode    char(10)   const options(*nopass : *omit);  // *REPLACE *ADDSHEET *APPEND *REPLSHEET
+  pSheet   char(31)   const options(*nopass : *omit);  // sheet name (blank = default)
+  pHeader  char(10)   const options(*nopass : *omit);  // *LABELS *TEXT *NAMES *NONE
+  pHdrList char(5000) const options(*nopass : *omit);  // 'Head 1;Head 2;;Head 4'
+  pFilter  char(4)    const options(*nopass : *omit);  // *YES *NO  autofilter
+  pFreeze  char(4)    const options(*nopass : *omit);  // *YES *NO  freeze header
+  pLevel   packed(1 : 0) const options(*nopass : *omit); // 0 store .. 9 best, dft 2
+  pColDesc char(10)   const options(*nopass : *omit);  // *NONE *ROW *NOTE *BOTH
+  pRows    packed(15 : 0) options(*nopass : *omit);    // out: data rows written
+  pMsg     char(256)  options(*nopass : *omit);        // out: error text, blank = ok
+  pRName   char(255)  const options(*nopass : *omit);  // defined name over the data
+  pTable   char(255)  const options(*nopass : *omit);  // *NONE *YES or table name
+  pHide    char(10)   const options(*nopass : *omit);  // *DFT *NO *YES *VERY
+end-pr;
+
+dcl-c XLSX_REPLACE  '*REPLACE';
+dcl-c XLSX_ADDSHEET '*ADDSHEET';
+dcl-c XLSX_APPEND   '*APPEND';
+dcl-c XLSX_REPLSHEET '*REPLSHEET';
+dcl-c XLSX_LABELS   '*LABELS';
+dcl-c XLSX_NAMES    '*NAMES';
+dcl-c XLSX_NONE     '*NONE';
+dcl-c XLSX_TEXT     '*TEXT';
+dcl-c XLSX_ROW      '*ROW';
+dcl-c XLSX_NOTE     '*NOTE';
+dcl-c XLSX_BOTH     '*BOTH';
+dcl-c XLSX_YES      '*YES';
+dcl-c XLSX_DFT      '*DFT';
+dcl-c XLSX_VERY     '*VERY';

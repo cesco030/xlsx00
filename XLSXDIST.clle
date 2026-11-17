@@ -1,0 +1,114 @@
+/* XLSXDIST - build the XLSX tools from their source directory       1.4.1 */
+/*   CALL XLSXDIST PARM(lib '/path/to/sources/')                            */
+/*   lib      library that receives the objects (must exist)                */
+/*   path     directory with the sources, ending in '/'. CALL passes a     */
+/*            literal of up to 32 characters padded to 32: a longer path   */
+/*            must be given padded with blanks to 128 characters.          */
+/* Objects: XLSX00R *PGM (SQL/file -> .xlsx), XLSX00 *CMD, XLSX00H *PNLGRP, */
+/*          XLSX10R *PGM (.xlsx -> Db2 table), XLSX01 *CMD, XLSX01H *PNLGRP */
+/* Modules are compiled into QTEMP; the commands find their program and     */
+/* help through the library list (*LIBL), so the objects can be saved and  */
+/* restored into any library. Public authority *USE, no adopted authority.  */
+/* Build this program first:                                                */
+/*   CRTBNDCL PGM(QTEMP/XLSXDIST) SRCSTMF('/path/to/sources/XLSXDIST.clle') */
+/* Text strings and the modules use the job CCSID (packages: 1144).         */
+/* ======================================================================== */
+PGM        PARM(&LIB &SRC)
+  DCL        VAR(&LIB) TYPE(*CHAR) LEN(10)
+  DCL        VAR(&SRC) TYPE(*CHAR) LEN(128)
+  DCL        VAR(&VER) TYPE(*CHAR) LEN(8) VALUE('1.4.1') /* = XLSX_VERSION */
+  DCL        VAR(&TXT) TYPE(*CHAR) LEN(50)
+  DCL        VAR(&INC) TYPE(*CHAR) LEN(128)
+  DCL        VAR(&NUL) TYPE(*CHAR) LEN(1) VALUE(X'00')
+  DCL        VAR(&I) TYPE(*INT) LEN(4)
+  DCL        VAR(&L) TYPE(*INT) LEN(4)
+  MONMSG     MSGID(CPF0000 CPD0000 RNS0000 SQL0000) EXEC(GOTO CMDLBL(FAIL))
+
+  CHGVAR     VAR(&I) VALUE(%SCAN(&NUL &SRC))   /* CALL padding */
+  IF         COND(&I *GT 0) THEN(DO)
+    CHGVAR     VAR(&L) VALUE(129 - &I)
+    CHGVAR     VAR(%SST(&SRC &I &L)) VALUE(' ')
+  ENDDO
+  CHGVAR     VAR(&INC) VALUE(&SRC)
+  CHKOBJ     OBJ(&LIB) OBJTYPE(*LIB)
+
+  /* modules */
+  CRTRPGMOD  MODULE(QTEMP/XLSX01R) +
+               SRCSTMF(&SRC *TCAT 'XLSX01R.rpgle') INCDIR(&INC) +
+               DBGVIEW(*SOURCE) OPTIMIZE(*FULL) TGTCCSID(*JOB) +
+               REPLACE(*YES)
+  CRTRPGMOD  MODULE(QTEMP/XLSX02R) +
+               SRCSTMF(&SRC *TCAT 'XLSX02R.rpgle') INCDIR(&INC) +
+               DBGVIEW(*SOURCE) OPTIMIZE(*FULL) TGTCCSID(*JOB) +
+               REPLACE(*YES)
+  CRTSQLRPGI OBJ(QTEMP/XLSX00R) +
+               SRCSTMF(&SRC *TCAT 'XLSX00R.sqlrpgle') INCDIR(&INC) +
+               OBJTYPE(*MODULE) COMMIT(*NONE) RDB(*NONE) +
+               DYNUSRPRF(*USER) DBGVIEW(*SOURCE) RPGPPOPT(*LVL2) +
+               COMPILEOPT('TGTCCSID(*JOB) OPTIMIZE(*FULL)') +
+               REPLACE(*YES)
+  CRTSQLRPGI OBJ(QTEMP/XLSX10R) +
+               SRCSTMF(&SRC *TCAT 'XLSX10R.sqlrpgle') INCDIR(&INC) +
+               OBJTYPE(*MODULE) COMMIT(*NONE) RDB(*NONE) +
+               DYNUSRPRF(*USER) DBGVIEW(*SOURCE) RPGPPOPT(*LVL2) +
+               COMPILEOPT('TGTCCSID(*JOB) OPTIMIZE(*FULL)') +
+               REPLACE(*YES)
+
+  /* programs */
+  CHGVAR     VAR(&TXT) VALUE('SQL/file -> Excel .xlsx v' *CAT &VER)
+  CRTPGM     PGM(&LIB/XLSX00R) +
+               MODULE(QTEMP/XLSX00R QTEMP/XLSX01R QTEMP/XLSX02R) +
+               ENTMOD(QTEMP/XLSX00R) ACTGRP(*NEW) BNDDIR(QC2LE) +
+               USRPRF(*USER) AUT(*USE) TEXT(&TXT) REPLACE(*YES)
+  CHGVAR     VAR(&TXT) VALUE('Excel .xlsx -> Db2 table v' *CAT &VER)
+  CRTPGM     PGM(&LIB/XLSX10R) +
+               MODULE(QTEMP/XLSX10R QTEMP/XLSX01R QTEMP/XLSX02R) +
+               ENTMOD(QTEMP/XLSX10R) ACTGRP(*NEW) BNDDIR(QC2LE) +
+               USRPRF(*USER) AUT(*USE) TEXT(&TXT) REPLACE(*YES)
+
+  /* help panel groups and commands */
+  CRTSRCPF   FILE(QTEMP/QCMDSRC) RCDLEN(112)
+  MONMSG     MSGID(CPF7302)
+  CRTSRCPF   FILE(QTEMP/QPNLSRC) RCDLEN(92)
+  MONMSG     MSGID(CPF7302)
+  CPYFRMSTMF FROMSTMF(&SRC *TCAT 'XLSX00.cmd') +
+               TOMBR('/QSYS.LIB/QTEMP.LIB/QCMDSRC.FILE/XLSX00.MBR') +
+               MBROPT(*REPLACE)
+  CPYFRMSTMF FROMSTMF(&SRC *TCAT 'XLSX01.cmd') +
+               TOMBR('/QSYS.LIB/QTEMP.LIB/QCMDSRC.FILE/XLSX01.MBR') +
+               MBROPT(*REPLACE)
+  CPYFRMSTMF FROMSTMF(&SRC *TCAT 'XLSX00H.pnlgrp') +
+               TOMBR('/QSYS.LIB/QTEMP.LIB/QPNLSRC.FILE/XLSX00H.MBR') +
+               MBROPT(*REPLACE)
+  CPYFRMSTMF FROMSTMF(&SRC *TCAT 'XLSX01H.pnlgrp') +
+               TOMBR('/QSYS.LIB/QTEMP.LIB/QPNLSRC.FILE/XLSX01H.MBR') +
+               MBROPT(*REPLACE)
+  CHGVAR     VAR(&TXT) VALUE('Help for command XLSX00 v' *CAT &VER)
+  CRTPNLGRP  PNLGRP(&LIB/XLSX00H) SRCFILE(QTEMP/QPNLSRC) SRCMBR(XLSX00H) +
+               AUT(*USE) TEXT(&TXT) REPLACE(*YES)
+  CHGVAR     VAR(&TXT) VALUE('Help for command XLSX01 v' *CAT &VER)
+  CRTPNLGRP  PNLGRP(&LIB/XLSX01H) SRCFILE(QTEMP/QPNLSRC) SRCMBR(XLSX01H) +
+               AUT(*USE) TEXT(&TXT) REPLACE(*YES)
+  DLTCMD     CMD(&LIB/XLSX00)
+  MONMSG     MSGID(CPF2105)
+  DLTCMD     CMD(&LIB/XLSX01)
+  MONMSG     MSGID(CPF2105)
+  CHGVAR     VAR(&TXT) VALUE('Export SQL/file to Excel XLSX v' *CAT &VER)
+  CRTCMD     CMD(&LIB/XLSX00) PGM(*LIBL/XLSX00R) +
+               SRCFILE(QTEMP/QCMDSRC) SRCMBR(XLSX00) AUT(*USE) +
+               TEXT(&TXT) HLPPNLGRP(*LIBL/XLSX00H) HLPID(XLSX00)
+  CHGVAR     VAR(&TXT) VALUE('Import Excel XLSX to table v' *CAT &VER)
+  CRTCMD     CMD(&LIB/XLSX01) PGM(*LIBL/XLSX10R) +
+               SRCFILE(QTEMP/QCMDSRC) SRCMBR(XLSX01) AUT(*USE) +
+               TEXT(&TXT) HLPPNLGRP(*LIBL/XLSX01H) HLPID(XLSX01)
+
+  SNDPGMMSG  MSGID(CPF9897) MSGF(QCPFMSG) MSGDTA('XLSX' *BCAT &VER *BCAT +
+               'built in' *BCAT &LIB *TCAT ': XLSX00R XLSX00 XLSX00H +
+               XLSX10R XLSX01 XLSX01H') MSGTYPE(*COMP)
+  RETURN
+
+FAIL:
+  SNDPGMMSG  MSGID(CPF9898) MSGF(QCPFMSG) MSGDTA('XLSXDIST' *BCAT &VER *BCAT +
+               'failed: see the messages before this one and the +
+               compile listings') MSGTYPE(*ESCAPE)
+ENDPGM

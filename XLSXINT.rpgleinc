@@ -1,0 +1,134 @@
+**free
+// =====================================================================================
+// XLSXINT - internal prototypes shared by the XLSX writer modules
+//   XLSX01R  IFS helpers, CRC-32, ZIP writer with streaming deflate (fixed+dynamic Huffman)
+//   XLSX02R  ZIP reader (whole file in memory) with inflate
+//   XLSX00R  SQL/file -> SpreadsheetML (main)
+// Only definitions here (no procedures): safe as first /copy of an SQLRPGLE module.
+// Version 1.4.1 (2026-11-17)
+// =====================================================================================
+/if defined(XLSXINT_H)
+/eof
+/endif
+/define XLSXINT_H
+
+dcl-c XLSX_VERSION '1.4.1';        // product version: bump on every change (see XLSX00R)
+dcl-c XLSX_VERDATE '2026-11-17';
+dcl-c XL_MAXENT  4000;            // max entries in a zip (writer and reader)
+dcl-c XL_RESMAX  524288;          // max bytes one zwReserve() can guarantee
+
+// ---- errors (kept in XLSX01R) -------------------------------------------------------
+dcl-pr xlSetErr extproc(*dclcase);
+  msg varchar(512) const;
+end-pr;
+dcl-pr xlErr varchar(512) extproc(*dclcase);
+end-pr;
+
+// ---- CRC-32 (IEEE, as used by ZIP) ---------------------------------------------------
+dcl-pr xlCrc32 uns(10) extproc(*dclcase);
+  crc  uns(10) value;               // previous value, 0 to start
+  data pointer value;
+  len  int(20) value;
+end-pr;
+
+// ---- timing statistics (microseconds, bytes) of the current/last archive -----------
+dcl-ds xlStat_t qualified template;
+  crcUs  int(20);
+  defUs  int(20);
+  wrtUs  int(20);
+  inB    int(20);
+  outB   int(20);
+end-ds;
+dcl-pr xlStats extproc(*dclcase);
+  st likeds(xlStat_t);
+end-pr;
+// ---- IFS helpers ---------------------------------------------------------------------
+dcl-pr xlExists ind extproc(*dclcase);
+  path varchar(1024) const;
+end-pr;
+dcl-pr xlRename int(10) extproc(*dclcase);      // replace target atomically
+  fromPath varchar(1024) const;
+  toPath   varchar(1024) const;
+end-pr;
+dcl-pr xlUnlink extproc(*dclcase);
+  path varchar(1024) const;
+end-pr;
+
+// ---- ZIP writer ----------------------------------------------------------------------
+dcl-pr zwOpen int(10) extproc(*dclcase);        // 0 ok, -1 error (see xlErr)
+  path  varchar(1024) const;
+  level int(10) value;                          // 0 = store, 1..9 = deflate effort
+end-pr;
+dcl-pr zwBegin int(10) extproc(*dclcase);       // start a new entry
+  name varchar(512) ccsid(*utf8) const;
+end-pr;
+dcl-pr zwWrite int(10) extproc(*dclcase);       // append bytes to the current entry
+  data pointer value;
+  len  int(10) value;
+end-pr;
+dcl-pr zwReserve pointer extproc(*dclcase);     // direct buffer access (hot path)
+  wp   pointer value;                           // current write pointer (*null = none)
+  need int(10) value;                           // bytes needed (<= XL_RESMAX)
+  wEnd pointer;                                 // out: end of usable area
+end-pr;
+dcl-pr zwCommit extproc(*dclcase);              // hand back the write pointer
+  wp pointer value;
+end-pr;
+dcl-pr zwEnd int(10) extproc(*dclcase);         // finish current entry
+end-pr;
+dcl-pr zwRaw int(10) extproc(*dclcase);         // copy an already compressed entry
+  name   varchar(512) ccsid(*utf8) const;
+  method int(10) value;
+  flags  int(10) value;
+  dtime  int(10) value;
+  ddate  int(10) value;
+  crc    uns(10) value;
+  csize  uns(10) value;
+  usize  uns(10) value;
+  data   pointer value;
+end-pr;
+dcl-pr zwClose int(10) extproc(*dclcase);       // central directory + close
+end-pr;
+dcl-pr zwAbort extproc(*dclcase);               // close and delete the file
+end-pr;
+
+// ---- ZIP reader ----------------------------------------------------------------------
+dcl-ds zrEnt_t qualified template;
+  name   varchar(512) ccsid(*utf8);
+  method int(10);
+  flags  int(10);
+  dtime  int(10);
+  ddate  int(10);
+  crc    uns(10);
+  csize  uns(10);
+  usize  uns(10);
+  data   pointer;                               // compressed bytes (in memory)
+end-ds;
+dcl-pr zrOpen int(10) extproc(*dclcase);        // number of entries, -1 error
+  path varchar(1024) const;
+end-pr;
+dcl-pr zrFind int(10) extproc(*dclcase);        // 1..n, 0 = not found
+  name varchar(512) ccsid(*utf8) const;
+end-pr;
+dcl-pr zrEntry int(10) extproc(*dclcase);       // copy of entry idx, -1 bad index
+  idx int(10) value;
+  ent likeds(zrEnt_t);
+end-pr;
+dcl-pr zrGet pointer extproc(*dclcase);         // inflated copy, caller deallocs
+  idx int(10) value;                            // *null on error (see xlErr)
+  len int(10);
+end-pr;
+dcl-pr zrClose extproc(*dclcase);
+end-pr;
+
+// ---- C runtime (QC2LE) ---------------------------------------------------------------
+dcl-pr memcpy pointer extproc('__memcpy');       // MI builtin, inlined
+  dst pointer value;
+  src pointer value;
+  n   uns(10) value;
+end-pr;
+dcl-pr memmove pointer extproc('memmove');
+  dst pointer value;
+  src pointer value;
+  n   uns(10) value;
+end-pr;

@@ -1,0 +1,506 @@
+
+  <!doctype html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+  <html>
+<head><META http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Export SQL/file to Excel XLSX  (XLSX00)</title>
+</head>
+<body bgcolor="white">
+<a name="XLSX00.Top_Of_Page"></a>
+<h2>Export SQL/file to Excel XLSX  (XLSX00)</h2>
+<table width="100%">
+<tr>
+<td align="left" valign="top"><b>Where allowed to run:  </b>All environments (*ALL)<br>
+<b>Threadsafe:  </b>No
+</td>
+<td align="right" valign="top">
+<a href="#XLSX00.PARAMETERS.TABLE">Parameters</a><br>
+<a href="#XLSX00.COMMAND.EXAMPLES">Examples</a><br>
+<a href="#XLSX00.ERROR.MESSAGES">Error messages</a></td>
+</tr>
+</table>
+
+<div> <a name="XLSX00"></a>
+<p>The Export to Excel XLSX (XLSX00) command writes the result of an SQL SELECT statement, or the records of a database file or member, to a Microsoft Excel workbook (.xlsx, Office Open XML) in a stream file of the integrated file system.
+</p>
+<p>The workbook is created by an ILE RPG program (XLSX00R) without Java, PASE or other products. Numbers stay numeric, dates, times and timestamps become real Excel dates, text is written as Unicode (UTF-8) converted from the CCSID of each column, and NULL values become empty cells.
+</p>
+<p>A new workbook can be created, a sheet can be added to an existing workbook, the content of a sheet can be replaced, or rows can be appended at the bottom of an existing sheet, also in workbooks created by Excel or other programs.
+</p>
+<p>The written cells can get a workbook name or become an Excel table, and the sheet can be hidden, so that report sheets, charts and pivot tables of a template can use the data.
+</p>
+<p>The header row can show the column names, the column headings or the column text, and the column text can also be added as a second header row or as Excel notes on the headings.
+</p>
+<p>Version 1.4.1.
+</p>
+<p><b>Restrictions:</b>
+</p>
+<ul>
+<li>
+<p>A worksheet holds at most 1,048,576 rows (header included) and 16,384 columns. Rows beyond the limit are not written and the completion message says that the sheet was truncated. The command handles at most 1000 columns.
+</p>
+</li>
+<li>
+<p>Text longer than 32,767 bytes is cut. BLOB, ROWID and DATALINK columns are left empty. CLOB, DBCLOB and XML columns are read up to 32,740 bytes.
+</p>
+</li>
+<li>
+<p>The workbook must be smaller than 4 GB (no ZIP64). When an existing workbook is updated, its parts styles.xml, workbook.xml and [Content_Types].xml must each be smaller than 1 MB.
+</p>
+</li>
+<li>
+<p>The file is written as a temporary file with the suffix .tmp and renamed at the end, so an existing workbook is not damaged by a failing run. You need *RWX authority to the directory of the stream file.
+</p>
+</li>
+<li>
+<p>The program XLSX00R is called with the library list of the job.
+</p>
+</li>
+</ul>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<hr width="100%" size="2">
+
+<div>
+<h3><a name="XLSX00.PARAMETERS.TABLE">Parameters</a></h3>
+<table cellspacing="0" cellpadding="4" border="1"><tr>
+<th width="10%" align="left" valign="bottom" bgcolor="aqua">Keyword</th>
+<th width="15%" align="left" valign="bottom" bgcolor="aqua">Description</th>
+<th width="30%" align="left" valign="bottom" bgcolor="aqua">Choices</th>
+<th width="10%" align="left" valign="bottom" bgcolor="aqua">Notes</th>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.SRC"><b>SRC</b></a></td>
+<td valign="top">SQL statement or LIB/FILE(MBR)</td>
+<td valign="top"><i>Character value</i></td>
+<td valign="top">Required, Positional 1</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.TOSTMF"><b>TOSTMF</b></a></td>
+<td valign="top">To stream file (.xlsx)</td>
+<td valign="top"><i>Character value</i></td>
+<td valign="top">Required, Positional 2</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.MODE"><b>MODE</b></a></td>
+<td valign="top">Mode</td>
+<td valign="top"><b><u>*REPLACE</u></b>, *ADDSHEET, *APPEND, *REPLSHEET</td>
+<td valign="top">Optional, Positional 3</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.SHEET"><b>SHEET</b></a></td>
+<td valign="top">Sheet name</td>
+<td valign="top"><i>Character value</i>, <b><u>*DFT</u></b></td>
+<td valign="top">Optional, Positional 4</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.HEADER"><b>HEADER</b></a></td>
+<td valign="top">Header row</td>
+<td valign="top"><b><u>*LABELS</u></b>, *TEXT, *NAMES, *NONE</td>
+<td valign="top">Optional, Positional 5</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.HDRTEXT"><b>HDRTEXT</b></a></td>
+<td valign="top">Column headings (a;b;c)</td>
+<td valign="top"><i>Character value</i>, <b><u>*NONE</u></b></td>
+<td valign="top">Optional, Positional 6</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.FILTER"><b>FILTER</b></a></td>
+<td valign="top">Autofilter on header row</td>
+<td valign="top"><b><u>*YES</u></b>, *NO</td>
+<td valign="top">Optional, Positional 7</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.FREEZE"><b>FREEZE</b></a></td>
+<td valign="top">Freeze header row</td>
+<td valign="top"><b><u>*YES</u></b>, *NO</td>
+<td valign="top">Optional, Positional 8</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.LEVEL"><b>LEVEL</b></a></td>
+<td valign="top">Compression level 0-9</td>
+<td valign="top">0-9, <b><u>2</u></b></td>
+<td valign="top">Optional, Positional 9</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.COLDESC"><b>COLDESC</b></a></td>
+<td valign="top">Column text: row / notes</td>
+<td valign="top"><b><u>*NONE</u></b>, *ROW, *NOTE, *BOTH</td>
+<td valign="top">Optional, Positional 10</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.RANGENAME"><b>RANGENAME</b></a></td>
+<td valign="top">Defined name over the data</td>
+<td valign="top"><i>Character value</i>, <b><u>*NONE</u></b></td>
+<td valign="top">Optional, Positional 11</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.TABLE"><b>TABLE</b></a></td>
+<td valign="top">Excel table (name or *YES)</td>
+<td valign="top"><i>Character value</i>, <b><u>*NONE</u></b>, *YES</td>
+<td valign="top">Optional, Positional 12</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX00.HIDE"><b>HIDE</b></a></td>
+<td valign="top">Hide the sheet</td>
+<td valign="top"><b><u>*DFT</u></b>, *NO, *YES, *VERY</td>
+<td valign="top">Optional, Positional 13</td>
+</tr>
+</table>
+
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+</div>
+<div> <a name="XLSX00.SRC"></a>
+<h3>SQL statement or file (SRC)</h3>
+<p>Specifies what is exported. This is a required parameter.
+</p>
+<dl>
+<dt><b><i>select-statement</i></b></dt>
+<dd>An SQL statement that starts with SELECT, WITH or VALUES. System naming is used: unqualified tables are found through the library list, and both LIB/TABLE and LIB.TABLE are accepted. Numeric literals use the period as decimal separator. Column names or AS clauses become the default headings.
+</dd>
+<dt><b><i>library-name/file-name</i></b></dt>
+<dd>A database file, table or view, as library/file, library.file or file alone (the file is then found through the library list). A member is given in parentheses, for example MYLIB/MYFILE(MBR2); the member is read through the alias QTEMP/XLSX00A.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.TOSTMF"></a>
+<h3>To stream file (TOSTMF)</h3>
+<p>Specifies the path of the workbook, for example /home/user/orders.xlsx. This is a required parameter.
+</p>
+<p>With MODE(*REPLACE) an existing file is replaced. With MODE(*ADDSHEET) or MODE(*APPEND) a file that does not exist is created as a new workbook.
+</p>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.MODE"></a>
+<h3>Mode (MODE)</h3>
+<p>Specifies how the stream file is written.
+</p>
+<dl>
+<dt><b><u>*REPLACE</u></b></dt>
+<dd>A new workbook with one sheet is created. An existing file is replaced.
+</dd>
+<dt><b>*ADDSHEET</b></dt>
+<dd>A new sheet is added at the end of an existing workbook. When the sheet name is already used, a number is added, for example Data (2).
+</dd>
+<dt><b>*APPEND</b></dt>
+<dd>The rows are added after the last row of the sheet named in the SHEET parameter, or of the last sheet when SHEET(*DFT) is specified. No header is written unless the sheet is empty; an autofilter of the sheet is extended to the new rows. When the sheet does not exist, it is added as with *ADDSHEET.
+</dd>
+<dt><b>*REPLSHEET</b></dt>
+<dd>The content of the sheet named in the SHEET parameter is replaced; with SHEET(*DFT) the file or member name, or Sheet1, is used. The sheet keeps its name and position; the other sheets, with their formulas, charts and pivot tables, are kept unchanged and still refer to the sheet by name.  Excel recalculates all formulas when the workbook is opened. Notes, drawings and tables that were on the replaced sheet itself are dropped.  Pivot tables based on a fixed cell range do not grow with the new rows: base them on a whole-column range or a dynamic name, and set their option to refresh data when the file is opened. When the sheet does not exist, it is added as with *ADDSHEET.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.SHEET"></a>
+<h3>Sheet name (SHEET)</h3>
+<p>Specifies the name of the worksheet (up to 31 characters). The characters [ ] : * ? / \ are replaced by an underscore.
+</p>
+<dl>
+<dt><b><u>*DFT</u></b></dt>
+<dd>The file or member name is used when a file is exported, otherwise Sheet1. With MODE(*APPEND) the last sheet of the workbook is used.  With MODE(*REPLSHEET) the sheet with this default name is replaced.
+</dd>
+<dt><b><i>sheet-name</i></b></dt>
+<dd>Specify the name of the sheet.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.HEADER"></a>
+<h3>Header row (HEADER)</h3>
+<p>Specifies the content of the header row. The header row is bold on a blue band; with FILTER(*YES) it has an autofilter and with FREEZE(*YES) it stays visible when scrolling.
+</p>
+<dl>
+<dt><b><u>*LABELS</u></b></dt>
+<dd>The column headings (LABEL ON COLUMN ... IS, the three lines of 20 characters joined), or the column name when a column has no heading.
+</dd>
+<dt><b>*TEXT</b></dt>
+<dd>The column text (LABEL ON COLUMN ... TEXT IS, field text of DDS files), or the heading, or the name, in this order. The text is taken from the base column of each result column, also through joins, views and AS names; expressions use their name.
+</dd>
+<dt><b>*NAMES</b></dt>
+<dd>The column names (or AS names) of the result.
+</dd>
+<dt><b>*NONE</b></dt>
+<dd>No header row is written. The parameters HDRTEXT, FILTER, FREEZE and COLDESC are ignored.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.HDRTEXT"></a>
+<h3>Column headings (HDRTEXT)</h3>
+<p>Specifies your own headings, separated by semicolons, in the order of the columns. An empty item keeps the heading chosen with the HEADER parameter. Example: 'Customer;Name;;Balance' changes the headings of columns 1, 2 and 4.
+</p>
+<dl>
+<dt><b><u>*NONE</u></b></dt>
+<dd>The headings are chosen with the HEADER parameter.
+</dd>
+<dt><b><i>heading-list</i></b></dt>
+<dd>Specify up to 5000 characters.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.FILTER"></a>
+<h3>Autofilter on header row (FILTER)</h3>
+<p>Specifies whether the header row gets the Excel autofilter buttons.
+</p>
+<dl>
+<dt><b><u>*YES</u></b></dt>
+<dd>An autofilter is set on the header row (on the second header row when COLDESC(*ROW) or COLDESC(*BOTH) is specified).
+</dd>
+<dt><b>*NO</b></dt>
+<dd>No autofilter.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.FREEZE"></a>
+<h3>Freeze header row (FREEZE)</h3>
+<p>Specifies whether the header rows stay visible when the sheet is scrolled.
+</p>
+<dl>
+<dt><b><u>*YES</u></b></dt>
+<dd>The header rows are frozen.
+</dd>
+<dt><b>*NO</b></dt>
+<dd>The header rows scroll with the data.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.LEVEL"></a>
+<h3>Compression level (LEVEL)</h3>
+<p>Specifies how much effort is spent compressing the workbook. Higher levels give smaller files and take more time.
+</p>
+<dl>
+<dt><b><u>2</u></b></dt>
+<dd>Good balance of speed and size, recommended for most exports.
+</dd>
+<dt><b>0</b></dt>
+<dd>No compression. Fastest, but the file is 5 to 7 times larger.
+</dd>
+<dt><b>1-9</b></dt>
+<dd>Levels 1 to 4 compare each position once (fast). Levels 5 to 9 also try the next position for a longer match, as zlib does, and give smaller files. Measured on 200,000 rows by 10 columns (91 MB of sheet data):
+<ul>
+<li>
+<p>Level 2: 15.1 MB in 6 seconds.
+</p>
+</li>
+<li>
+<p>Level 4: 12.3 MB in 11 seconds.
+</p>
+</li>
+<li>
+<p>Level 6: 11.3 MB in 15 seconds.
+</p>
+</li>
+<li>
+<p>Level 7: 10.8 MB in 19 seconds.
+</p>
+</li>
+<li>
+<p>Level 9: about as small as level 7, in 33 seconds.
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.COLDESC"></a>
+<h3>Column text: row / notes (COLDESC)</h3>
+<p>Specifies whether the column text (LABEL ON COLUMN ... TEXT IS, field text of DDS files) is added to the header. The text is taken from the base column of each result column. This parameter is ignored with HEADER(*NONE).
+</p>
+<dl>
+<dt><b><u>*NONE</u></b></dt>
+<dd>No column text is added.
+</dd>
+<dt><b>*ROW</b></dt>
+<dd>A second header row shows the column text, in italics. When the heading already is the text (HEADER(*TEXT)), the second row shows the column name.
+</dd>
+<dt><b>*NOTE</b></dt>
+<dd>Each heading gets an Excel note, shown when the mouse is over the cell, with the base column (schema.table.column), the SQL data type, the column text and the column heading. Notes are added only to sheets created by the command, not when rows are appended to an existing sheet.
+</dd>
+<dt><b>*BOTH</b></dt>
+<dd>Both a second header row and notes.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.RANGENAME"></a>
+<h3>Defined name over the data (RANGENAME)</h3>
+<p>Specifies a workbook name (Formulas, Name Manager in Excel) for the cells written by the command: the header row and the data rows, for example Sales = 'Data'!$A$1:$K$13. Formulas, charts and pivot tables can use the name instead of a cell range. An existing workbook name with the same name is replaced; with MODE(*APPEND) only its last row is moved to the new last row.
+</p>
+<dl>
+<dt><b><u>*NONE</u></b></dt>
+<dd>No name is defined.
+</dd>
+<dt><b><i>name</i></b></dt>
+<dd>Up to 255 characters: letters A-Z, digits, _ . and \, starting with a letter, _ or \. A name that looks like a cell reference (for example AB12 or R1C1) is not allowed. Put the name between apostrophes to keep lower case letters.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.TABLE"></a>
+<h3>Excel table (TABLE)</h3>
+<p>Specifies whether the header row and the data rows of a sheet created by the command become an Excel table (Insert, Table in Excel). A table has its own filter buttons and banded rows, and formulas, charts and pivot tables that refer to the table name follow its size when rows are added.
+</p>
+<p>With MODE(*APPEND), tables of the existing sheet that end at its last row are extended over the new rows; this parameter is then ignored. With MODE(*REPLSHEET) the tables of the replaced sheet are removed first, so a table with the same name can be created again: pivot tables, charts and formulas of a report template that use the table name keep working with the new number of rows.
+</p>
+<p>A table needs exactly one header row: it cannot be used with HEADER(*NONE) or with COLDESC(*ROW) or COLDESC(*BOTH). Duplicate headings get a number (Name, Name2).
+</p>
+<dl>
+<dt><b><u>*NONE</u></b></dt>
+<dd>No table; the header row gets a normal autofilter (FILTER parameter).
+</dd>
+<dt><b>*YES</b></dt>
+<dd>A table named after the sheet, for example sheet Data gives table Data.  Characters that are not allowed become underscores, and a number is added when the name is already used.
+</dd>
+<dt><b><i>table-name</i></b></dt>
+<dd>The name of the table, with the same rules as for RANGENAME. It must not be used by another table or workbook name.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX00.HIDE"></a>
+<h3>Hide the sheet (HIDE)</h3>
+<p>Specifies whether the sheet written by the command is hidden, for example a data sheet used by the report sheets of a template. A workbook must keep at least one visible sheet.
+</p>
+<dl>
+<dt><b><u>*DFT</u></b></dt>
+<dd>A new sheet is visible. An existing sheet (MODE(*APPEND) or MODE(*REPLSHEET)) keeps its state, so a hidden data sheet stays hidden.
+</dd>
+<dt><b>*NO</b></dt>
+<dd>The sheet is visible.
+</dd>
+<dt><b>*YES</b></dt>
+<dd>The sheet is hidden. It can be shown again with Unhide in Excel.
+</dd>
+<dt><b>*VERY</b></dt>
+<dd>The sheet is very hidden: it is not listed by Unhide in Excel and can only be shown again with VBA or by a program.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<hr width="100%" size="2">
+<div> <a name="XLSX00.COMMAND.EXAMPLES"></a>
+<h3>Examples for XLSX00</h3>
+<p><b>Example 1: Export a query</b>
+</p>
+<p>
+<pre>
+XLSX00 SRC('select * from mylib/orders where year = 2026')
+       TOSTMF('/home/user/orders.xlsx')
+</pre>
+</p>
+<p>Creates orders.xlsx with one sheet, column headings in the header row, autofilter and frozen header.
+</p>
+<p><b>Example 2: Add a file as a new sheet, with column text</b>
+</p>
+<p>
+<pre>
+XLSX00 SRC('MYLIB/CUSTOMERS') TOSTMF('/home/user/orders.xlsx')
+       MODE(*ADDSHEET) SHEET(Customers) HEADER(*TEXT) COLDESC(*NOTE)
+</pre>
+</p>
+<p>Adds the sheet Customers to orders.xlsx. The headings are the field texts; each heading has a note with the field name, type and text.
+</p>
+<p><b>Example 3: Append the rows of a member to a sheet</b>
+</p>
+<p>
+<pre>
+XLSX00 SRC('MYLIB/DAILY(D20261028)') TOSTMF('/home/user/log.xlsx')
+       MODE(*APPEND) SHEET(Daily)
+</pre>
+</p>
+<p>Adds the records of member D20261028 after the last row of sheet Daily.
+</p>
+<p><b>Example 4: Refresh the data sheet of a report template</b>
+</p>
+<p>
+<pre>
+XLSX00 SRC('select * from mylib/sales where year = 2026')
+       TOSTMF('/reports/sales.xlsx') MODE(*REPLSHEET) SHEET(Data)
+</pre>
+</p>
+<p>Rewrites sheet Data of sales.xlsx. The summary sheets, charts and pivot tables that use Data are kept and show the new figures when the workbook is opened.
+</p>
+<p><b>Example 5: Hidden data table for a report template</b>
+</p>
+<p>
+<pre>
+XLSX00 SRC('select * from mylib/sales') TOSTMF('/reports/sales.xlsx')
+       MODE(*REPLSHEET) SHEET(Data) TABLE(Sales) HIDE(*YES)
+</pre>
+</p>
+<p>Rewrites the hidden sheet Data as table Sales. Pivot tables and charts of the template based on Sales show all the new rows.
+</p>
+<p><b>Example 6: Call from RPG</b>
+</p>
+<p>
+<pre>
+/copy '/home/user/xlsx/XLSX00PR.rpgleinc'
+XLSX00R(sql : '/home/user/x.xlsx' : '*REPLACE' : 'Data' : '*TEXT'
+        : *omit : '*YES' : '*YES' : 2 : '*NOTE' : rows : msg
+        : 'SalesRange' : '*YES' : '*DFT');
+</pre>
+</p>
+<p>With the optional parameter msg, errors are returned in msg (blank when the export succeeded) instead of an escape message; rows receives the number of rows written.
+</p>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+<hr width="100%" size="2">
+<div> <a name="XLSX00.ERROR.MESSAGES"></a>
+<h3>Error messages for XLSX00</h3>
+<p><b><u>*ESCAPE messages</u></b>
+</p>
+<dl>
+<dt><b>CPF9898</b></dt>
+<dd>The export failed. The text starts with XLSX00R and tells the reason, for example an SQL error with its SQLSTATE, a stream file that cannot be written, or a workbook that cannot be updated.
+</dd>
+</dl>
+<p><b><u>*COMP messages</u></b>
+</p>
+<dl>
+<dt><b>CPF9897</b></dt>
+<dd>Number of rows written, sheet, stream file and elapsed seconds.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX00.Top_Of_Page">Top</a></td></tr>
+</table>
+</body>
+</html>

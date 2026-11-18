@@ -2,10 +2,10 @@
 
 **Command reference** - the F1 help of the two commands as web pages, generated from their help panel groups with `GENCMDDOC` (the IBM i command that renders CL command help as HTML, as in IBM's own CL documentation):
 
-- [XLSX00 - Export SQL/file to Excel XLSX](XLSX00-help.html)
-- [XLSX01 - Import Excel XLSX to table](XLSX01-help.html)
+- [XLSX00 - Export SQL/file to Excel XLSX](https://cesco030.github.io/xlsx00/XLSX00-help.html)
+- [XLSX01 - Import Excel XLSX to table](https://cesco030.github.io/xlsx00/XLSX01-help.html)
 
-(GitHub shows these files as source: open them in a browser from a download or a clone. Every parameter, its values and default, examples and messages are there.)
+Every parameter, its values and default, examples and messages are there. The same pages are the files `XLSX00-help.html` and `XLSX01-help.html` of the repository and of every package.
 
 Two commands, no Java, no PASE, no PC, no ODBC:
 

@@ -1,0 +1,630 @@
+
+  <!doctype html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+  <html>
+<head><META http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Import Excel XLSX to table  (XLSX01)</title>
+</head>
+<body bgcolor="white">
+<a name="XLSX01.Top_Of_Page"></a>
+<h2>Import Excel XLSX to table  (XLSX01)</h2>
+<table width="100%">
+<tr>
+<td align="left" valign="top"><b>Where allowed to run:  </b>All environments (*ALL)<br>
+<b>Threadsafe:  </b>No
+</td>
+<td align="right" valign="top">
+<a href="#XLSX01.PARAMETERS.TABLE">Parameters</a><br>
+<a href="#XLSX01.COMMAND.EXAMPLES">Examples</a><br>
+<a href="#XLSX01.ERROR.MESSAGES">Error messages</a></td>
+</tr>
+</table>
+
+<div> <a name="XLSX01"></a>
+<p>The Import Excel XLSX to table (XLSX01) command reads the rows of a worksheet of a Microsoft Excel workbook (.xlsx, Office Open XML) from a stream file of the integrated file system and inserts them into a Db2 table. The table can be created by the command or can already exist.
+</p>
+<p>The workbook is read by an ILE RPG program (XLSX10R) without Java, PASE, ODBC or a PC. Workbooks written by Excel, LibreOffice, Google Sheets, openpyxl, XlsxWriter and the XLSX00 command can be read.
+</p>
+<p>With the default values the command finds the data by itself:
+</p>
+<ul>
+<li>
+<p>The first Excel table of the sheet, or the range of an active autofilter, is used when there is one.
+</p>
+</li>
+<li>
+<p>Otherwise title rows above the data (rows with few filled cells) are skipped and the data ends at the last filled row. Empty rows inside the data are ignored.
+</p>
+</li>
+<li>
+<p>The first row is used as header when it holds only distinct texts over numbers or dates, or texts that do not repeat in the data.
+</p>
+</li>
+<li>
+<p>When the table is created, the type of each column is chosen from all the values of the column: INTEGER, BIGINT, DECIMAL, DOUBLE, DATE, TIME, TIMESTAMP, SMALLINT for TRUE/FALSE, and VARCHAR for text. Column names come from the headings (or COL_A, COL_B...), with the heading as column text and column heading.
+</p>
+</li>
+<li>
+<p>When the table exists, the Excel columns are matched to the table columns by heading (column name, system name, text or column heading) or else by position, and every value is converted to the column type.
+</p>
+</li>
+</ul>
+<p>With ERRORS(*STOP), the default, all values are checked before the first row is inserted: if one does not fit, nothing is written and the messages tell the cell, the value and the reason.
+</p>
+<p>Version 1.4.1.
+</p>
+<p><b>Restrictions:</b>
+</p>
+<ul>
+<li>
+<p>At most 1000 columns are read. Formulas are read as their last calculated value, which Excel stores in the file. Cells with an Excel error (#N/A, #DIV/0! ...) are read as empty cells.
+</p>
+</li>
+<li>
+<p>The .xlsb, .xls and .ods formats and password protected (encrypted) workbooks are not supported; save them as .xlsx first.
+</p>
+</li>
+<li>
+<p>The rows are inserted without commitment control, in blocks of up to 1000 rows. With ERRORS(*SKIP) or ERRORS(*NULL) the rows inserted before an unexpected database error stay in the table.
+</p>
+</li>
+<li>
+<p>Text that is longer than 32,740 bytes in UTF-8 is cut.
+</p>
+</li>
+</ul>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<hr width="100%" size="2">
+
+<div>
+<h3><a name="XLSX01.PARAMETERS.TABLE">Parameters</a></h3>
+<table cellspacing="0" cellpadding="4" border="1"><tr>
+<th width="10%" align="left" valign="bottom" bgcolor="aqua">Keyword</th>
+<th width="15%" align="left" valign="bottom" bgcolor="aqua">Description</th>
+<th width="30%" align="left" valign="bottom" bgcolor="aqua">Choices</th>
+<th width="10%" align="left" valign="bottom" bgcolor="aqua">Notes</th>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.FROMSTMF"><b>FROMSTMF</b></a></td>
+<td valign="top">From stream file (.xlsx)</td>
+<td valign="top"><i>Character value</i></td>
+<td valign="top">Required, Positional 1</td>
+</tr>
+<tr>
+<td valign="top" rowspan="3"><a href="#XLSX01.TOFILE"><b>TOFILE</b></a></td>
+<td valign="top">To table</td>
+<td valign="top"><i>Qualified object name</i></td>
+<td valign="top" rowspan="3">Required, Positional 2</td>
+</tr>
+<tr>
+<td valign="top">Qualifier 1: To table</td>
+<td valign="top"><i>Name</i>, *NONE</td>
+</tr><tr>
+<td valign="top">Qualifier 2: Library</td>
+<td valign="top"><i>Name</i>, <b><u>*LIBL</u></b>, *CURLIB</td>
+</tr><tr>
+<td valign="top"><a href="#XLSX01.SHEET"><b>SHEET</b></a></td>
+<td valign="top">Sheet name or number</td>
+<td valign="top"><i>Character value</i>, <b><u>*FIRST</u></b></td>
+<td valign="top">Optional, Positional 3</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.RANGE"><b>RANGE</b></a></td>
+<td valign="top">Cell range, table or name</td>
+<td valign="top"><i>Character value</i>, <b><u>*AUTO</u></b></td>
+<td valign="top">Optional, Positional 4</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.HEADER"><b>HEADER</b></a></td>
+<td valign="top">Header row</td>
+<td valign="top"><b><u>*AUTO</u></b>, *YES, *NO, *SKIP</td>
+<td valign="top">Optional, Positional 5</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.STARTROW"><b>STARTROW</b></a></td>
+<td valign="top">First row (header or data)</td>
+<td valign="top">1-1048576, <b><u>*AUTO</u></b></td>
+<td valign="top">Optional, Positional 6</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.ROWSEL"><b>ROWSEL</b></a></td>
+<td valign="top">Rows to read</td>
+<td valign="top"><b><u>*ALL</u></b>, *VISIBLE</td>
+<td valign="top">Optional, Positional 7</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.MAXROWS"><b>MAXROWS</b></a></td>
+<td valign="top">Maximum rows</td>
+<td valign="top">1-1048576, <b><u>*ALL</u></b></td>
+<td valign="top">Optional, Positional 8</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.MBROPT"><b>MBROPT</b></a></td>
+<td valign="top">Replace or add rows</td>
+<td valign="top"><b><u>*ADD</u></b>, *REPLACE</td>
+<td valign="top">Optional, Positional 9</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.CRTFILE"><b>CRTFILE</b></a></td>
+<td valign="top">Create table</td>
+<td valign="top"><b><u>*YES</u></b>, *NO, *REPLACE</td>
+<td valign="top">Optional, Positional 10</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.MAP"><b>MAP</b></a></td>
+<td valign="top">Column mapping</td>
+<td valign="top"><b><u>*AUTO</u></b>, *NAME, *POS</td>
+<td valign="top">Optional, Positional 11</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.COLMAP"><b>COLMAP</b></a></td>
+<td valign="top">Column map (Heading=COL;..)</td>
+<td valign="top"><i>Character value</i>, <b><u>*NONE</u></b></td>
+<td valign="top">Optional, Positional 12</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.TYPES"><b>TYPES</b></a></td>
+<td valign="top">Column types (COL=type;..)</td>
+<td valign="top"><i>Character value</i>, <b><u>*AUTO</u></b></td>
+<td valign="top">Optional, Positional 13</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.NULLS"><b>NULLS</b></a></td>
+<td valign="top">Nullable new columns</td>
+<td valign="top"><b><u>*NO</u></b>, *YES</td>
+<td valign="top">Optional, Positional 14</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.ERRORS"><b>ERRORS</b></a></td>
+<td valign="top">Values that do not fit</td>
+<td valign="top"><b><u>*STOP</u></b>, *SKIP, *NULL</td>
+<td valign="top">Optional, Positional 15</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.STRCCSID"><b>STRCCSID</b></a></td>
+<td valign="top">CCSID of new text columns</td>
+<td valign="top"><i>Character value</i>, <b><u>*AUTO</u></b>, *JOB, *UTF8, *UTF16</td>
+<td valign="top">Optional, Positional 16</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.TRIM"><b>TRIM</b></a></td>
+<td valign="top">Trim blanks of text</td>
+<td valign="top"><b><u>*YES</u></b>, *NO</td>
+<td valign="top">Optional, Positional 17</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.DATFMT"><b>DATFMT</b></a></td>
+<td valign="top">Order of text dates</td>
+<td valign="top"><b><u>*DMY</u></b>, *MDY, *YMD</td>
+<td valign="top">Optional, Positional 18</td>
+</tr>
+<tr>
+<td valign="top"><a href="#XLSX01.REPORT"><b>REPORT</b></a></td>
+<td valign="top">Report stream file</td>
+<td valign="top"><i>Character value</i>, <b><u>*NONE</u></b></td>
+<td valign="top">Optional, Positional 19</td>
+</tr>
+</table>
+
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+</div>
+<div> <a name="XLSX01.FROMSTMF"></a>
+<h3>From stream file (FROMSTMF)</h3>
+<p>Specifies the path of the workbook, for example /home/user/orders.xlsx.  This is a required parameter.
+</p>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.TOFILE"></a>
+<h3>To table (TOFILE)</h3>
+<p>Specifies the table that receives the rows. This is a required parameter.
+</p>
+<dl>
+<dt><b><i>table-name</i></b></dt>
+<dd>The system name of the table or physical file. When it does not exist and CRTFILE(*YES) is specified, it is created.
+</dd>
+<dt><b>*NONE</b></dt>
+<dd>Nothing is written to the database. The workbook is analysed and the result (sheets, data area, header, column types and the CREATE TABLE statement that would be used) is written to the REPORT stream file and to the job log.
+</dd>
+</dl>
+<p>The possible library values are:
+</p>
+<dl>
+<dt><b><u>*LIBL</u></b></dt>
+<dd>The library list is searched; a new table is created in the current library.
+</dd>
+<dt><b>*CURLIB</b></dt>
+<dd>The current library of the job.
+</dd>
+<dt><b><i>library-name</i></b></dt>
+<dd>The library of the table.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.SHEET"></a>
+<h3>Sheet name or number (SHEET)</h3>
+<p>Specifies the worksheet to read.
+</p>
+<dl>
+<dt><b><u>*FIRST</u></b></dt>
+<dd>The first visible worksheet of the workbook.
+</dd>
+<dt><b><i>sheet-name</i></b></dt>
+<dd>The name of the sheet, as shown on its tab. Uppercase and lowercase letters are not distinguished.
+</dd>
+<dt><b><i>sheet-number</i></b></dt>
+<dd>The position of the sheet in the workbook, 1 for the first one, hidden sheets included.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.RANGE"></a>
+<h3>Cell range, table or name (RANGE)</h3>
+<p>Specifies the cells to read.
+</p>
+<dl>
+<dt><b><u>*AUTO</u></b></dt>
+<dd>The first Excel table of the sheet, else the range of the autofilter of the sheet (with the rows added below it), else the filled cells found by the heuristic described in the command help.
+</dd>
+<dt><b><i>cell-range</i></b></dt>
+<dd>A range like B4:H200, whole columns like B:H, or the top left cell like B4 (the data then goes on to the last filled row and column). The first row of the range is the header row when there is one.
+</dd>
+<dt><b><i>table-name</i></b></dt>
+<dd>The name of an Excel table (Insert &gt; Table) of any sheet. Its header row and totals row are handled automatically.
+</dd>
+<dt><b><i>defined-name</i></b></dt>
+<dd>A workbook defined name (Formulas &gt; Name Manager) that refers to a cell range.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.HEADER"></a>
+<h3>Header row (HEADER)</h3>
+<p>Specifies whether the first row of the data area holds column headings.
+</p>
+<dl>
+<dt><b><u>*AUTO</u></b></dt>
+<dd>Decided from the cells: a row of distinct texts over numbers, dates or texts that differ from it is a header row.
+</dd>
+<dt><b>*YES</b></dt>
+<dd>The first row holds the headings. They are used to name new columns and to match existing columns.
+</dd>
+<dt><b>*NO</b></dt>
+<dd>The first row is data. New columns are named COL_A, COL_B ... after the Excel column letters, and existing columns are matched by position.
+</dd>
+<dt><b>*SKIP</b></dt>
+<dd>The first row is a header, but it is not used: the row is skipped and columns are named and matched as with *NO.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.STARTROW"></a>
+<h3>First row (STARTROW)</h3>
+<p>Specifies the sheet row where the data area starts (the header row when there is one). Rows above it are ignored, for example report titles.
+</p>
+<dl>
+<dt><b><u>*AUTO</u></b></dt>
+<dd>The first row of RANGE, or the first row found by the heuristic.
+</dd>
+<dt><b><i>row-number</i></b></dt>
+<dd>A row number from 1 to 1048576, as shown by Excel.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.ROWSEL"></a>
+<h3>Rows to read (ROWSEL)</h3>
+<dl>
+<dt><b><u>*ALL</u></b></dt>
+<dd>All the rows of the data area are read.
+</dd>
+<dt><b>*VISIBLE</b></dt>
+<dd>Rows hidden by an Excel filter, or hidden by hand, are skipped. Use it to import only what the user filtered in Excel. The filter must have been applied by Excel before the file was saved.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.MAXROWS"></a>
+<h3>Maximum rows (MAXROWS)</h3>
+<p>Specifies the maximum number of data rows to insert.
+</p>
+<dl>
+<dt><b><u>*ALL</u></b></dt>
+<dd>All the rows are inserted.
+</dd>
+<dt><b><i>number</i></b></dt>
+<dd>Only the first rows are inserted, for example to try a big file.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.MBROPT"></a>
+<h3>Replace or add rows (MBROPT)</h3>
+<dl>
+<dt><b><u>*ADD</u></b></dt>
+<dd>The rows are added to the rows already in the table.
+</dd>
+<dt><b>*REPLACE</b></dt>
+<dd>The rows of an existing table are deleted (TRUNCATE, or DELETE when truncate is not allowed) after all the values have been checked and before the new rows are inserted.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.CRTFILE"></a>
+<h3>Create table (CRTFILE)</h3>
+<dl>
+<dt><b><u>*YES</u></b></dt>
+<dd>A table that does not exist is created with the columns and types found in the sheet. An existing table is used as it is.
+</dd>
+<dt><b>*NO</b></dt>
+<dd>The table must exist.
+</dd>
+<dt><b>*REPLACE</b></dt>
+<dd>An existing table is dropped and created again from the sheet. Use it for work tables only: indexes, views, authorities and triggers over the old table are lost.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.MAP"></a>
+<h3>Column mapping (MAP)</h3>
+<p>Specifies how the Excel columns are matched to the columns of an existing table.
+</p>
+<dl>
+<dt><b><u>*AUTO</u></b></dt>
+<dd>By heading when at least one heading matches a column, else by position.
+</dd>
+<dt><b>*NAME</b></dt>
+<dd>By heading only. A heading matches the column name, the system column name, the column text or the column heading, ignoring case, blanks and punctuation. Excel columns without a match are ignored and reported.
+</dd>
+<dt><b>*POS</b></dt>
+<dd>The first Excel column goes to the first table column and so on.  Identity columns and columns generated always are skipped.
+</dd>
+</dl>
+<p>Table columns without an Excel column receive their default value. A NOT NULL column without default that gets no value stops the command.
+</p>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.COLMAP"></a>
+<h3>Column map (COLMAP)</h3>
+<p>Specifies explicit pairs Excel column = table column, separated by semicolons. The Excel column is given by its heading or by its letter.  *SKIP as table column ignores the Excel column. Pairs not given follow the MAP parameter.
+</p>
+<p>
+<pre>
+COLMAP('Customer no.=CUSNUM; Amount EUR=AMOUNT; F=*SKIP')
+</pre>
+</p>
+<p>For a new table, COLMAP gives the names of the new columns.
+</p>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.TYPES"></a>
+<h3>Column types (TYPES)</h3>
+<p>Specifies the SQL type of columns of a new table, instead of the type found from the values. Pairs column=type are separated by semicolons; the column is given by its new name, its heading or its Excel letter.
+</p>
+<p>
+<pre>
+TYPES('ZIP=CHAR(5); AMOUNT=DECIMAL(11,2); C=VARCHAR(200)')
+</pre>
+</p>
+<p>With TYPES the values are checked like for an existing table.
+</p>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.NULLS"></a>
+<h3>Nullable new columns (NULLS)</h3>
+<dl>
+<dt><b><u>*NO</u></b></dt>
+<dd>New columns are NOT NULL WITH DEFAULT: empty cells become blanks, zero, 0001-01-01 for dates or 00.00.00 for times.
+</dd>
+<dt><b>*YES</b></dt>
+<dd>New columns allow null values: empty cells become NULL.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.ERRORS"></a>
+<h3>Values that do not fit (ERRORS)</h3>
+<p>Specifies what happens with a value that cannot be converted to its column, for example a text in a numeric column, a number with too many digits or a text that is too long.
+</p>
+<dl>
+<dt><b><u>*STOP</u></b></dt>
+<dd>All the values are checked before anything is written. When one value does not fit, no row is inserted, a new table is dropped, and the first 20 errors are sent as diagnostic messages.
+</dd>
+<dt><b>*SKIP</b></dt>
+<dd>Rows with a value that does not fit are not inserted. The other rows are.
+</dd>
+<dt><b>*NULL</b></dt>
+<dd>A value that does not fit becomes NULL, or the default value when the column does not allow null values. Text that is too long is cut.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.STRCCSID"></a>
+<h3>CCSID of new text columns (STRCCSID)</h3>
+<dl>
+<dt><b><u>*AUTO</u></b></dt>
+<dd>Text columns get the CCSID of the job, unless a value has characters the job CCSID cannot hold (Greek, Cyrillic, Chinese ...): then the column is VARCHAR CCSID 1208 (UTF-8).
+</dd>
+<dt><b>*JOB</b></dt>
+<dd>The CCSID of the job for all text columns. Characters that it cannot hold are replaced by the substitution character.
+</dd>
+<dt><b>*UTF8</b></dt>
+<dd>VARCHAR CCSID 1208 for all text columns.
+</dd>
+<dt><b>*UTF16</b></dt>
+<dd>VARGRAPHIC CCSID 1200 for all text columns.
+</dd>
+<dt><b><i>ccsid</i></b></dt>
+<dd>A single-byte CCSID such as 37, 280 or 1144.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.TRIM"></a>
+<h3>Trim blanks of text (TRIM)</h3>
+<dl>
+<dt><b><u>*YES</u></b></dt>
+<dd>Leading and trailing blanks of text cells are removed.
+</dd>
+<dt><b>*NO</b></dt>
+<dd>Texts are kept as they are.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.DATFMT"></a>
+<h3>Order of text dates (DATFMT)</h3>
+<p>Specifies how dates written as text, like 03/04/2026, are read. Real Excel dates and ISO texts like 2026-04-03 are always read correctly.
+</p>
+<dl>
+<dt><b><u>*DMY</u></b></dt>
+<dd>Day, month, year (03/04/2026 is 3 April).
+</dd>
+<dt><b>*MDY</b></dt>
+<dd>Month, day, year (03/04/2026 is 4 March).
+</dd>
+<dt><b>*YMD</b></dt>
+<dd>Year, month, day.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<div> <a name="XLSX01.REPORT"></a>
+<h3>Report stream file (REPORT)</h3>
+<p>Specifies a stream file that receives a UTF-8 text report: sheets of the workbook, data area and how it was found, header decision, each column with its type, mapping and statistics, the SQL statements, errors and timings.
+</p>
+<dl>
+<dt><b><u>*NONE</u></b></dt>
+<dd>No report is written.
+</dd>
+<dt><b><i>path-name</i></b></dt>
+<dd>The path of the report; an existing file is replaced.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<hr width="100%" size="2">
+<div> <a name="XLSX01.COMMAND.EXAMPLES"></a>
+<h3>Examples for XLSX01</h3>
+<p><b>Example 1: Create a table from a workbook</b>
+</p>
+<p>
+<pre>
+XLSX01 FROMSTMF('/home/user/prices.xlsx') TOFILE(MYLIB/PRICES)
+</pre>
+</p>
+<p>Creates table PRICES from the first sheet, with names and types found from the data.
+</p>
+<p><b>Example 2: Refresh an existing table</b>
+</p>
+<p>
+<pre>
+XLSX01 FROMSTMF('/home/user/rates.xlsx') TOFILE(MYLIB/RATES)
+       SHEET('2026') MBROPT(*REPLACE) CRTFILE(*NO)
+</pre>
+</p>
+<p>Checks all the values of sheet 2026, then replaces the rows of RATES.
+</p>
+<p><b>Example 3: Only the filtered rows of a report</b>
+</p>
+<p>
+<pre>
+XLSX01 FROMSTMF('/home/user/open.xlsx') TOFILE(QTEMP/OPEN)
+       STARTROW(4) ROWSEL(*VISIBLE)
+</pre>
+</p>
+<p><b>Example 4: Analyse only</b>
+</p>
+<p>
+<pre>
+XLSX01 FROMSTMF('/home/user/x.xlsx') TOFILE(*NONE)
+       REPORT('/home/user/x.txt')
+</pre>
+</p>
+<p><b>Example 5: Call from RPG</b>
+</p>
+<p>
+<pre>
+/copy '/home/user/xlsx/XLSX10PR.rpgleinc'
+XLSX10R('/home/user/x.xlsx' : 'ORDERS    MYLIB     ' : rows : msg
+       : 'Data' : *omit : '*YES');
+</pre>
+</p>
+<p>With the parameter msg, errors are returned in msg (blank when the import succeeded) instead of an escape message; rows receives the number of rows inserted.
+</p>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+<hr width="100%" size="2">
+<div> <a name="XLSX01.ERROR.MESSAGES"></a>
+<h3>Error messages for XLSX01</h3>
+<p><b><u>*ESCAPE messages</u></b>
+</p>
+<dl>
+<dt><b>CPF9898</b></dt>
+<dd>The import failed. The text starts with XLSX10R and tells the reason, for example a file that is not a workbook, a sheet that does not exist, values that do not fit (see the diagnostic messages before it) or an SQL error with its SQLSTATE.
+</dd>
+</dl>
+<p><b><u>*DIAG messages</u></b>
+</p>
+<dl>
+<dt><b>CPF9897</b></dt>
+<dd>One message for each of the first 20 values that do not fit: cell, value, column and reason.
+</dd>
+</dl>
+<p><b><u>*COMP messages</u></b>
+</p>
+<dl>
+<dt><b>CPF9897</b></dt>
+<dd>Rows inserted, sheet, table and elapsed seconds.
+</dd>
+</dl>
+</div>
+<table width="100%">
+<tr><td align="right"><a href="#XLSX01.Top_Of_Page">Top</a></td></tr>
+</table>
+</body>
+</html>

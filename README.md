@@ -1,5 +1,12 @@
 # XLSX tools 1.4.1 for IBM i - Excel .xlsx from and to Db2, in pure ILE RPG
 
+**Command reference** - the F1 help of the two commands as web pages, generated from their help panel groups with `GENCMDDOC` (the IBM i command that renders CL command help as HTML, as in IBM's own CL documentation):
+
+- [XLSX00 - Export SQL/file to Excel XLSX](XLSX00-help.html)
+- [XLSX01 - Import Excel XLSX to table](XLSX01-help.html)
+
+(GitHub shows these files as source: open them in a browser from a download or a clone. Every parameter, its values and default, examples and messages are there.)
+
 Two commands, no Java, no PASE, no PC, no ODBC:
 
 | Command | Program | What it does |
@@ -7,7 +14,7 @@ Two commands, no Java, no PASE, no PC, no ODBC:
 | `XLSX00` | `XLSX00R` | Writes the result of an SQL statement or a database file to an Excel `.xlsx` stream file: new workbook, add a sheet, append rows, replace one sheet of a template; headings from column names, labels or text; filter, frozen header, column notes, Excel table, named range, hidden sheet; own deflate (levels 0-9). 200,000 rows x 10 columns in about 6 seconds on one Power9 core. |
 | `XLSX01` | `XLSX10R` | Reads one sheet of an `.xlsx` stream file into a Db2 table: creates the table (names and types from the data) or fills an existing one (columns matched by heading or position); finds the data by itself (Excel table, filter range, title rows), reads only visible rows if asked, checks every value before writing (`ERRORS(*STOP)`), report file with the decisions. 200,000 rows x 10 columns in about 14 seconds on one Power9 core. |
 
-Both commands have full F1 help (every parameter, examples, messages); `XLSX00-help.html` and `XLSX01-help.html` are the same help as web pages.
+Both commands have full F1 help (every parameter, examples, messages); `XLSX00-help.html` and `XLSX01-help.html` (above) are the same help as web pages.
 
 ## Package
 
